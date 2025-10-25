@@ -1,0 +1,176 @@
+---
+title: "Understanding SSR, CSR, SSG, and ISR"
+date: "2025-9-9"
+description: "A complete guide to Next.js rendering methods — SSR, CSR, SSG, and ISR — with clear concepts, code examples, and use cases."
+tags: ["Next.js", "Web Development", "Rendering", "React", "Performance"]
+type: writing
+published: true
+---
+
+<img src="/images/blog-1.png" alt="Blog 1" width="600" />
+
+# Understanding SSR, CSR, SSG, and ISR
+
+When you visit a website, you might notice that some pages load instantly while others take a moment to show real content. Behind this experience are different rendering strategies ways that web pages are built and delivered to your browser.
+
+The four most common methods are CSR (Client-Side Rendering), SSR (Server-Side Rendering), SSG (Static Site Generation), and ISR (Incremental Static Regeneration). This article will explain each method and provide examples of implementation.
+
+<Divider />
+
+# 1. Client-Side Rendering (CSR)
+
+## CSR Means The Website is Built in Your Browser
+
+CSR is a technique where web pages are fully rendered on the client after receiving data from the API. This page usually starts with a loading state and then displays the content after the data is received.
+
+For example when you open a web app like Gmail or Facebook, it might first show a blank or loading screen, then fill in the content after a few seconds.
+
+## When to Use It
+
+Use CSR when the page requires user interaction or dynamic data that changes frequently and does not require high SEO.
+
+```jsx
+// pages/profile.js
+
+import { useEffect, useState } from "react";
+
+export default function CSRExample() {
+  const [data, setData] = useState(null);
+
+  useEffect(() => {
+    fetch("https://api.example.com/profile")
+      .then((res) => res.json())
+      .then(setData);
+  }, []);
+
+  if (!data) return <p>Loading...</p>;
+
+  return (
+    <div>
+      <h1>CSR Example</h1>
+      <p>{data.name}</p>
+    </div>
+  );
+}
+```
+
+<Divider />
+
+# 2. Server-Side Rendering (SSR)
+
+## SSR Means The Website Is Built on The Server Before It’s Sent to You
+
+This is how traditional websites used to work, a technique where web pages are rendered on the server on each request and the results are sent to the client. This ensures that the page is always up-to-date with the latest data.
+
+## When to Use It
+
+Use SSR when the page needs to display real-time data or personalized content based on user or session data.
+
+```jsx
+// pages/dashboard.js
+
+export async function getServerSideProps() {
+  const res = await fetch("https://api.example.com/dashboard");
+  const data = await res.json();
+
+  return {
+    props: { data },
+  };
+}
+
+export default function SSRExample({ data }) {
+  return (
+    <div>
+      <h1>SSR Example</h1>
+      <p>{data}</p>
+    </div>
+  );
+}
+```
+
+<Divider />
+
+# 3. Static Site Generation (SSG)
+
+## SSG Means The Website is Prebuilt Ahead of Time and Served as Static Files
+
+SSG is a technique where web pages are rendered at build time. The result is a static page ready to be presented to the user. This is perfect for sites that don’t change often, like blogs, portfolios, or documentation pages.
+
+## When to Use It
+
+Use SSG for pages with content that rarely changes, such as landing pages or blog posts that are not updated often.
+
+```jsx
+// pages/index.js
+
+export async function getStaticProps() {
+  const res = await fetch("https://api.example.com/documentation");
+  const datas = await res.json();
+
+  return {
+    props: { datas },
+  };
+}
+
+export default function SSGExample({ datas }) {
+  return (
+    <div>
+      <h1>SSG Example</h1>
+      <ul>
+        {datas.map((data) => (
+          <li key={data.id}>{data.name}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+```
+
+<Divider />
+
+# 4. Incremental Static Regeneration (ISR)
+
+## ISR Combines The Best of SSG and SSR
+
+ISR allows you to update static pages after the site is built. With ISR, pages can be revalidated periodically without having to rebuild the entire site.
+
+It’s ideal for sites that change regularly but not constantly, like a news website where new articles appear, but old ones stay the same.
+
+## When to Use It
+
+Use ISR when you want to benefit from SSG but also need the page to be updated regularly.
+
+```jsx
+// pages/posts/[slug].js
+
+export async function getStaticPaths() {
+  const res = await fetch("https://api.example.com/posts");
+  const posts = await res.json();
+
+  const paths = posts.map((post) => ({
+    params: { slug: post.slug },
+  }));
+
+  return { paths, fallback: "blocking" };
+}
+
+export async function getStaticProps({ params }) {
+  const res = await fetch(`https://api.example.com/posts/${params.slug}`);
+  const post = await res.json();
+
+  return {
+    props: { post },
+    revalidate: 60, // regenerate page every 60 seconds
+  };
+}
+
+export default function ISRExample({ post }) {
+  return (
+    <div>
+      <h1>ISR Example</h1>
+      <h2>{post.title}</h2>
+      <p>{post.body}</p>
+    </div>
+  );
+}
+```
