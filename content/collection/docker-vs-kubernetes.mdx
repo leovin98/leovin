@@ -1,0 +1,171 @@
+---
+title: "Docker vs Kubernetes"
+date: "2025-9-9"
+description: "Learn the difference between Docker and Kubernetes. Discover how they work together, with simple examples and visuals anyone can understand."
+tags: ["Docker", "Kubernetes"]
+type: writing
+published: true
+---
+
+<img src="/images/kubernetes-vs-docker.webp" alt="Blog 1" width="600" />
+
+# Docker vs Kubernetes: What’s the Difference?
+
+If you’ve ever wondered “What’s the difference between Docker and Kubernetes?” you’re not alone! These two tools are often mentioned together, but they solve different problems.
+
+Think of Docker as the box that holds your app, and Kubernetes as the system that manages all those boxes. Let’s break it down step by step.
+
+<Divider />
+
+# Docker: Builds and Runs Your App
+
+Docker is a tool that creates containers. A container is like a box that holds your app and everything it needs to run. For example you have an online store app. With Docker, you can pack the app together with its database, libraries, and settings. So it will run the same way on any computer.
+
+In short, Docker helps developers make sure an app works anywhere.
+
+<Divider />
+
+# Kubernetes: Manages Many Containers
+
+Now imagine you have hundreds of containers running different apps. Managing them one by one would be a mess. That’s where Kubernetes helps. It organizes, monitors, and balances all containers automatically.
+
+For example big companies like Netflix or Shopee run many services at once. Kubernetes makes sure all containers run smoothly and adds more capacity when user traffic increases.
+
+In short, Kubernetes is the manager that organizes and runs your containers.
+
+<Divider />
+
+# Example: Simple Dockerfile and Kubernetes Deployment
+
+## Step 1: Create a simple app
+
+Example: a small web server using Python.
+
+Create a file called app.py:
+
+```python
+from flask import Flask
+app = Flask(__name__)
+
+@app.route('/')
+def hello():
+    return "Hello from Docker and Kubernetes!"
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
+```
+
+<Divider />
+
+## Step 2: Create a Dockerfile
+
+This file tells Docker how to build the container.
+
+Create a file named Dockerfile:
+
+```bash
+# Use a Python base image
+FROM python:3.9
+
+# Set working directory
+WORKDIR /app
+
+# Copy app code to the container
+COPY app.py /app
+
+# Install dependencies
+RUN pip install flask
+
+# Tell Docker how to run the app
+CMD ["python", "app.py"]
+```
+
+<Divider />
+
+## Step 3: Build and run the Docker container
+
+Run these commands in your terminal:
+
+```bash
+# Build the image
+docker build -t myapp .
+
+# Run the container
+docker run -p 5000:5000 myapp
+```
+
+Now open your browser and go to http://localhost:5000
+
+You’ll see: Hello from Docker and Kubernetes!
+
+<Divider />
+
+## Step 4: Use Kubernetes to manage the app
+
+First, create a deployment file called deployment.yaml:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: myapp
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+        - name: myapp
+          image: myapp
+          ports:
+            - containerPort: 5000
+```
+
+And a service file service.yaml:
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: myapp-service
+spec:
+  type: NodePort
+  selector:
+    app: myapp
+  ports:
+    - port: 5000
+      targetPort: 5000
+      nodePort: 30007
+```
+
+<Divider />
+
+## Step 5: Deploy it on Kubernetes
+
+Assuming you have kubectl and minikube installed:
+
+```bash
+# Start Kubernetes cluster
+minikube start
+
+# Deploy the app
+kubectl apply -f deployment.yaml
+kubectl apply -f service.yaml
+
+# Check the service
+kubectl get services
+
+# Run the service
+minikube service myapp-service
+```
+
+Minikube will automatically find the NodePort of your service, and then open your default web browser.
+
+If the browser doesn’t open automatically, you can copy the URL that Minikube shows in the terminal and paste it into your browser manually.
+
+You’ll see the same message, but now it’s running in Kubernetes and with 3 replicas automatically managed.
